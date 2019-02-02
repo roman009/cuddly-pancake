@@ -1,0 +1,69 @@
+version: '3'
+
+services:
+  mongo:
+    container_name: mongo
+    image: mongo:3.2
+    networks:
+      - pritunl
+    ports:
+      - "27017"
+    restart: always
+    volumes:
+      - /app/opt/mongo/data:/data/db
+
+  pritunl:
+    container_name: pritunl
+    build: ./vpn/
+    image: pritunl
+    depends_on:
+      - mongo
+    networks:
+      - pritunl
+    ports:
+      - "443"
+      - "1194:1194/udp"
+    privileged: true
+    restart: always
+    environment:
+      VIRTUAL_HOST: test.buzila.ro
+      LETSENCRYPT_HOST: test.buzila.ro
+      LETSENCRYPT_EMAIL: xlscq84@gmail.com
+      VIRTUAL_PORT: 443
+
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - pritunl
+    networks:
+      - pritunl
+    restart: always
+    volumes:
+      - /app/nginx/certs:/etc/nginx/certs
+      - /app/nginx/vhost.d:/etc/nginx/vhost.d
+      - /app/nginx/html:/etc/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  letsencrypt-nginx-proxy-companion:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    networks:
+      - pritunl
+    depends_on:
+      - nginx-proxy
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /app/nginx/certs:/etc/nginx/certs
+      - /app/nginx/vhost.d:/etc/nginx/vhost.d
+      - /app/nginx/html:/usr/share/nginx/html
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      NGINX_PROXY_CONTAINER: nginx-proxy
+      NGINX_DOCKER_GEN_CONTAINER: nginx-proxy
+  
+networks:
+  pritunl:
