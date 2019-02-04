@@ -26,9 +26,9 @@ services:
     privileged: true
     restart: always
     environment:
-      VIRTUAL_HOST: test.buzila.ro
-      LETSENCRYPT_HOST: test.buzila.ro
-      LETSENCRYPT_EMAIL: xlscq84@gmail.com
+      VIRTUAL_HOST: test.host.com
+      LETSENCRYPT_HOST: test.host.com
+      LETSENCRYPT_EMAIL: some-email@gmail.com
       VIRTUAL_PORT: 443
 
   nginx-proxy:
